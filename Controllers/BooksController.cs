@@ -1,60 +1,54 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using BookstoreAPI.Models;
+using BookstoreAPI.Services;
 
 [Route("api/[controller]")]
 [ApiController]
 public class BooksController : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IBookService _bookService;
 
-    public BooksController(ApplicationDbContext context)
+    public BooksController(IBookService bookService)
     {
-        _context = context;
+        _bookService = bookService;
     }
 
     [HttpGet("booklist")]
     public ActionResult<IEnumerable<Book>> GetBooks()
     {
-        return _context.Books.ToList();
+        return Ok(_bookService.GetAllBooks());
     }
 
     [HttpPost("addBook")]
     public ActionResult<Book> AddBook(Book book)
     {
-        _context.Books.Add(book);
-        _context.SaveChanges();
+        _bookService.AddBook(book);
         return CreatedAtAction(nameof(GetBooks), new { id = book.Id }, book);
     }
 
     [HttpPut("updateBook/{id}")]
     public IActionResult UpdateBook(int id, Book updatedBook)
     {
-        var book = _context.Books.Find(id);
+        var book = _bookService.GetBookById(id);
         if (book == null)
         {
             return NotFound();
         }
 
-        book.Title = updatedBook.Title;
-        book.Author = updatedBook.Author;
-        book.Price = updatedBook.Price;
-
-        _context.SaveChanges();
+        _bookService.UpdateBook(id, updatedBook);
         return NoContent();
     }
 
     [HttpDelete("deleteBook/{id}")]
     public IActionResult DeleteBook(int id)
     {
-        var book = _context.Books.Find(id);
+        var book = _bookService.GetBookById(id);
         if (book == null)
         {
             return NotFound();
         }
 
-        _context.Books.Remove(book);
-        _context.SaveChanges();
+        _bookService.DeleteBook(id);
         return NoContent();
     }
-
 }
